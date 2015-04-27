@@ -384,10 +384,11 @@ k () {
         # Check for git repo
         if (( IS_GIT_REPO != 0)); then
 	  if (( IS_DIRECTORY )); then
-            if command git --git-dir="$GIT_TOPLEVEL/.git" --work-tree="${NAME}" diff --quiet --ignore-submodules HEAD &>/dev/null # if dirty
-              then REPOMARKER=$'\e[38;5;46m|\e[0m' # Show a green vertical bar for dirty
-              else REPOMARKER=$'\e[0;31m|\e[0m' # Show a red vertical bar if clean
-            fi
+          # Check if dirty, apply proper colors to '|' on directories
+          if command git --git-dir="$GIT_TOPLEVEL/.git" --work-tree="${NAME}" diff --quiet --ignore-submodules HEAD &>/dev/null
+          then REPOMARKER=$'\e[38;5;46m|\e[0m' # Show a green vertical bar for dirty
+          else REPOMARKER=$'\e[0;31m|\e[0m' # Show a red vertical bar if clean
+          fi
 	  else
             STATUS=$(git --git-dir=$GIT_TOPLEVEL/.git --work-tree=$GIT_TOPLEVEL status --porcelain --ignored --untracked-files=normal ${${${NAME:a}##$GIT_TOPLEVEL}#*/})
             STATUS=${STATUS[1,2]}
@@ -404,16 +405,15 @@ k () {
       # --------------------------------------------------------------------------
       # Colour the filename
       # --------------------------------------------------------------------------
-      # Unfortunately, the choices for quoting which escape ANSI color sequences are q & qqqq; none of q- qq qqq work.
-      # But we don't want to quote '.'; so instead we escape the escape manually and use q-
-      NAME="${(q-)${NAME##*/}//$'\e'/\\e}"    # also propagate changes to SYMLINK_TARGET below
+      # Strip off any leading ./ stuff that shows up
+      NAME=${NAME##*/}
 
       if (( IS_DIRECTORY ))
       then
-        NAME=$'\e[38;5;32m'"$NAME"$'\e[0m'
+          NAME=$'\e[38;5;32m'"$NAME"$'\e[0m'
       elif (( IS_SYMLINK ))
       then
-        NAME=$'\e[0;35m'"$NAME"$'\e[0m'
+          NAME=$'\e[0;35m'"$NAME"$'\e[0m'
       fi
 
       # --------------------------------------------------------------------------
