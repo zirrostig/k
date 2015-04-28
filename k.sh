@@ -151,7 +151,7 @@ k () {
 
     #Directory, add its contents
     else
-      # Break total blocks of the front of the stat call, then push the rest to results
+      # Break up total blocks of the front of the stat call, then push the rest to results
       if [[ "$o_all" != "" && "$o_almost_all" == "" && "$o_no_directory" == "" ]]; then
         show_list+=($base_dir/.)
         show_list+=($base_dir/..)
@@ -222,7 +222,6 @@ k () {
     # ----------------------------------------------------------------------------
     # Loop through each line of stat, pad where appropriate and do git dirty checking
     # ----------------------------------------------------------------------------
-
     typeset REPOMARKER
     typeset PERMISSIONS HARDLINKCOUNT OWNER GROUP FILESIZE FILESIZE_OUT DATE NAME SYMLINK_TARGET
     typeset FILETYPE PER1 PER2 PER3 PERMISSIONS_OUTPUT STATUS
@@ -260,17 +259,18 @@ k () {
       # is this a git repo
       if [[ "$o_no_vcs" != "" ]]; then
         IS_GIT_REPO=0
-	GIT_TOPLEVEL=''
+	      GIT_TOPLEVEL=''
       else
-	if (( IS_DIRECTORY ));
-	  then cd $NAME     2>/dev/null || cd - >/dev/null && IS_GIT_REPO=0 #Say no if we don't have permissions there
-          else cd $NAME:a:h 2>/dev/null || cd - >/dev/null && IS_GIT_REPO=0
-	fi
+        if (( IS_DIRECTORY ));
+        #Say no if we don't have permissions there
+	      then cd $NAME     2>/dev/null || cd - >/dev/null && IS_GIT_REPO=0 
+        else cd $NAME:a:h 2>/dev/null || cd - >/dev/null && IS_GIT_REPO=0
+	      fi
         if [[ $(command git rev-parse --is-inside-work-tree 2>/dev/null) == true ]]; then
           IS_GIT_REPO=1
-	  GIT_TOPLEVEL=$(git rev-parse --show-toplevel)
-	else
-	  IS_GIT_REPO=0
+	        GIT_TOPLEVEL=$(git rev-parse --show-toplevel)
+	      else
+	        IS_GIT_REPO=0
         fi
         cd - >/dev/null
       fi
@@ -296,15 +296,9 @@ k () {
       # --------------------------------------------------------------------------
       # Colour the first character based on filetype
       FILETYPE="${PERMISSIONS[1]}"
-      if (( IS_DIRECTORY ))
-        then
-        FILETYPE=${FILETYPE//d/$'\e[1;36m'd$'\e[0m'};
-      elif (( IS_SYMLINK ))
-        then
-        FILETYPE=${FILETYPE//l/$'\e[0;35m'l$'\e[0m'};
-      elif [[ $FILETYPE == "-" ]];
-        then
-        FILETYPE=${FILETYPE//-/$'\e[0;37m'-$'\e[0m'};
+      if   (( IS_DIRECTORY ));     then FILETYPE=${FILETYPE//d/$'\e[1;36m'd$'\e[0m'};
+      elif (( IS_SYMLINK ));       then FILETYPE=${FILETYPE//l/$'\e[0;35m'l$'\e[0m'};
+      elif [[ $FILETYPE == "-" ]]; then FILETYPE=${FILETYPE//-/$'\e[0;37m'-$'\e[0m'};
       fi
 
       # Permissions Owner
@@ -379,20 +373,20 @@ k () {
       # Colour the repomarker
       # --------------------------------------------------------------------------
       if [[ "$o_no_vcs" != "" ]]; then
-	REPOMARKER=""
+	      REPOMARKER=""
       else
         # Check for git repo
         if (( IS_GIT_REPO != 0)); then
-	  if (( IS_DIRECTORY )); then
-          # Check if dirty, apply proper colors to '|' on directories
-          if command git --git-dir="$GIT_TOPLEVEL/.git" --work-tree="${NAME}" diff --quiet --ignore-submodules HEAD &>/dev/null
-          then REPOMARKER=$'\e[38;5;46m|\e[0m' # Show a green vertical bar for dirty
-          else REPOMARKER=$'\e[0;31m|\e[0m' # Show a red vertical bar if clean
-          fi
-	  else
+          if (( IS_DIRECTORY )); then
+            # Check if dirty, apply proper colors to '|' on directories
+            if command git --git-dir="$GIT_TOPLEVEL/.git" --work-tree="${NAME}" diff --quiet --ignore-submodules HEAD &>/dev/null
+            then REPOMARKER=$'\e[38;5;46m|\e[0m' # Show a green vertical bar for dirty
+            else REPOMARKER=$'\e[0;31m|\e[0m' # Show a red vertical bar if clean
+            fi
+	        else
             STATUS=$(git --git-dir=$GIT_TOPLEVEL/.git --work-tree=$GIT_TOPLEVEL status --porcelain --ignored --untracked-files=normal ${${${NAME:a}##$GIT_TOPLEVEL}#*/})
             STATUS=${STATUS[1,2]}
-              if [[ $STATUS == ' M' ]]; then REPOMARKER=$'\e[0;31m|\e[0m';     # Modified
+            if [[ $STATUS == ' M' ]]; then REPOMARKER=$'\e[0;31m|\e[0m';     # Modified
             elif [[ $STATUS == '??' ]]; then REPOMARKER=$'\e[38;5;214m|\e[0m'; # Untracked
             elif [[ $STATUS == '!!' ]]; then REPOMARKER=$'\e[38;5;238m|\e[0m'; # Ignored
             elif [[ $STATUS == 'A ' ]]; then REPOMARKER=$'\e[38;5;093m|\e[0m'; # Added
@@ -410,10 +404,10 @@ k () {
 
       if (( IS_DIRECTORY ))
       then
-          NAME=$'\e[38;5;32m'"$NAME"$'\e[0m'
+        NAME=$'\e[38;5;32m'"$NAME"$'\e[0m'
       elif (( IS_SYMLINK ))
       then
-          NAME=$'\e[0;35m'"$NAME"$'\e[0m'
+        NAME=$'\e[0;35m'"$NAME"$'\e[0m'
       fi
 
       # --------------------------------------------------------------------------
